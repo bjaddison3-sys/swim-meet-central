@@ -77,13 +77,47 @@
     });
     readNote().then(value=>{note.value=value;if(value)saved.textContent='Your previously saved note was restored.';})
       .catch(error=>{saved.textContent='Local storage unavailable: '+error.message;});
-    if('serviceWorker' in navigator){
-      navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(async registration=>{
-        await navigator.serviceWorker.ready;
-        offlineReady.textContent='Offline files installed. You can test with WiFi disconnected.';
-        if(registration.waiting)offlineReady.textContent='Offline files installed. A newer version is waiting for the next restart.';
-      }).catch(error=>{offlineReady.textContent='Offline installation failed: '+error.message;});
-    }else{offlineReady.textContent='This browser does not support offline installation.';}
+    if ('serviceWorker' in navigator) {
+      offlineReady.textContent = 'Registering offline service worker…';
+      navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
+        .then(registration => {
+          function showStatus() {
+            if (registration.active && registration.active.state === 'activated') {
+              offlineReady.textContent = 'Offline files installed. You can test with WiFi disconnected.';
+            } else if (registration.installing) {
+              offlineReady.textContent = 'Installing offline files (' + registration.installing.state + ')…';
+            } else if (registration.waiting) {
+              offlineReady.textContent = 'Offline update waiting to activate. Refresh this page.';
+            } else {
+              offlineReady.textContent = 'Service worker registered; waiting for activation…';
+            }
+          }
+          showStatus();
+          registration.addEventListener('updatefound', () => {
+            const worker = registration.installing;
+            if (worker) {
+              worker.addEventListener('statechange', () => {
+                showStatus();
+                if (worker.state === 'redundant') {
+                  offlineReady.textContent = 'Offline installation failed. Check Chrome DevTools → Application → Service Workers for the error.';
+                }
+              });
+            }
+          });
+          if (registration.installing) {
+            registration.installing.addEventListener('statechange', showStatus);
+          }
+          navigator.serviceWorker.addEventListener('controllerchange', showStatus);
+          registration.update().catch(error => {
+            offlineReady.textContent = 'Offline update error: ' + error.message;
+          });
+        })
+        .catch(error => {
+          offlineReady.textContent = 'Offline installation failed: ' + error.message;
+        });
+    } else {
+      offlineReady.textContent = 'This browser does not support offline installation.';
+    }
   </script>
 </body>
 </html>

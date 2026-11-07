@@ -1,18 +1,46 @@
 'use strict';
-const CACHE_NAME = 'swim-meet-central-step7-v1';
-const FILES = ['./', './index.html', './manifest.webmanifest'];
+
+const CACHE_NAME = 'swim-meet-central-step7-v2';
+const OFFLINE_PAGE = new URL('./index.html', self.registration.scope).href;
+
 self.addEventListener('install', event => {
-  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
+  event.waitUntil((async () => {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await fetch(OFFLINE_PAGE, { cache: 'reload' });
+    if (!response.ok) {
+      throw new Error('Could not cache index.html: HTTP ' + response.status);
+    }
+    await cache.put(OFFLINE_PAGE, response);
+    await self.skipWaiting();
+  })());
 });
+
 self.addEventListener('activate', event => {
-  event.waitUntil(Promise.all([
-    caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('swim-meet-central-') && key !== CACHE_NAME).map(key => caches.delete(key)))),
-    self.clients.claim()
-  ]));
+  event.waitUntil((async () => {
+    const names = await caches.keys();
+    await Promise.all(names.filter(name =>
+      name.startsWith('swim-meet-central-') && name !== CACHE_NAME
+    ).map(name => caches.delete(name)));
+    await self.clients.claim();
+  })());
 });
+
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
-  if (url.origin !== self.location.origin || !url.pathname.startsWith(new URL(self.registration.scope).pathname)) return;
-  event.respondWith(caches.match(event.request).then(cached => cached || fetch(event.request)));
+  const scope = new URL(self.registration.scope);
+  if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith((async () => {
+      try {
+        const response = await fetch(event.request);
+        if (response.ok) return response;
+      } catch (error) {
+        // Use the locally saved application when the network is unavailable.
+      }
+      const cache = await caches.open(CACHE_NAME);
+      return (await cache.match(OFFLINE_PAGE)) || Response.error();
+    })());
+  }
 });
