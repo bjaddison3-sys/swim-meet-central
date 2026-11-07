@@ -1,6 +1,6 @@
 'use strict';
 
-const CACHE_NAME = 'swim-meet-central-step8b-v1';
+const CACHE_NAME = 'swim-meet-central-step9a-v1';
 const OFFLINE_PAGE = new URL('./index.html', self.registration.scope).href;
 
 self.addEventListener('install', event => {
