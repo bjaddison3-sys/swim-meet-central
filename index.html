@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#17613d">
+  <meta name="theme-color" content="#102d53">
   <link rel="manifest" href="./manifest.webmanifest">
   <title>Swim Meet Central 2.0 — Offline Dashboard</title>
   <style>
@@ -16,7 +16,11 @@
     .subtle { color: #5b6d66; font-size: .87rem; } .status { padding: 8px 12px; border-radius: 9px; background: #dcebe3; font-size: .85rem; }
     .layout { display: grid; grid-template-columns: minmax(245px, .95fr) minmax(320px, 1.5fr) minmax(280px, 1.1fr); gap: 14px; align-items: start; }
     .panel { border-radius: 14px; background: white; padding: 18px; box-shadow: 0 3px 15px #152e2112; min-width: 0; }
-    .called { background: #b65c1c; color: white; } .pool { background: #237a50; color: white; }
+    .called { background: #b65c1c; color: white; } .pool { background: #102d53; color: white; min-height: 525px; display: flex; flex-direction: column; }
+    .panel > h2 { text-align: center; font-size: 1.42rem; font-weight: 800; margin-bottom: 16px; }
+    .tasks-panel { grid-column: 1 / -1; transition: background-color .2s ease; }
+    .tasks-panel.has-due { background: #ffe08a; color: #392d10; }
+    .tasks-panel.has-due .subtle, .tasks-panel.has-due .task small { color: #59451a; }
     .called .subtle, .pool .subtle { color: #f2f5ed; }
     .list { max-height: 480px; overflow-y: auto; padding-right: 4px; }
     .event-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #ffffff35; }
@@ -25,16 +29,19 @@
     .event-row.checked .event-link { opacity: .72; }
     .big-number { font-size: clamp(4.5rem, 10vw, 8rem); font-weight: 800; line-height: 1; }
     .pool-heading { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0; }
-    .heat-badge { display: grid; place-content: center; text-align: center; border-radius: 50%; background: white; color: #17613d; width: 76px; height: 76px; }
+    .heat-badge { display: grid; place-content: center; text-align: center; border-radius: 50%; background: white; color: #102d53; width: 76px; height: 76px; }
     .heat-badge strong { font-size: 1.8rem; line-height: 1; } .heat-badge span { font-size: .67rem; font-weight: 800; }
     .pool-name { text-align: center; font-size: 1.3rem; font-weight: 750; min-height: 3.1em; }
     .pool-qual { text-align: center; margin: 15px 0; } .pool-qual strong { font-size: 1.35rem; }
-    .pool-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    .pool-buttons { display: flex; gap: 12px; margin-top: auto; padding-top: 20px; }
+    .family-slot { min-height: 90px; display: flex; align-items: flex-start; }
+    .family-slot .family-alert { width: 100%; }
+    .pool-qual { min-height: 62px; }
     button.action { background: #174e35; color: white; border: 0; padding: 11px 16px; border-radius: 9px; font: inherit; font-weight: 700; cursor: pointer; }
     button.action:disabled { opacity: .5; cursor: not-allowed; }
-    .pool-buttons button { flex: 1; background: white; color: #17613d; font-size: 1.5rem; }
+    .pool-buttons button { flex: 1; background: white; color: #102d53; font-size: 1.5rem; }
     .family-alert { background: #ffe59d; color: #754c05; border-radius: 9px; padding: 12px; margin: 12px 0; font-weight: 750; }
-    .right { display: grid; gap: 14px; } .task { display: flex; align-items: flex-start; gap: 9px; padding: 10px 0; border-bottom: 1px solid #e3e9e6; }
+    .task { display: flex; align-items: flex-start; gap: 9px; padding: 10px 0; border-bottom: 1px solid #e3e9e6; }
     .task input { margin-top: 4px; width: 18px; height: 18px; } .task.done { opacity: .6; }
     .task small { display: block; color: #62736a; margin-top: 3px; }
     .task-form { display: grid; grid-template-columns: 76px 1fr auto; gap: 7px; margin-top: 12px; }
@@ -49,13 +56,13 @@
     dialog { border: 0; border-radius: 14px; padding: 25px; max-width: 430px; width: calc(100% - 30px); box-shadow: 0 15px 65px #0006; }
     dialog::backdrop { background: #101d18a8; } .detail { padding: 8px 0; border-bottom: 1px solid #e6ece8; }
     .footer { max-width: 1400px; margin: 14px auto; color: #62736a; font-size: .85rem; }
-    @media (max-width: 1050px) { .layout { grid-template-columns: 1fr 1fr; } .right { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 650px) { .layout, .right { grid-template-columns: 1fr; } .right { grid-column: auto; } body { padding: 10px; } }
+    @media (max-width: 1050px) { .layout { grid-template-columns: 1fr 1fr; } .swimmers { grid-column: 1 / -1; } }
+    @media (max-width: 650px) { .layout { grid-template-columns: 1fr; } .swimmers { grid-column: auto; } body { padding: 10px; } }
   </style>
 </head>
 <body>
   <header>
-    <div><h1>Swim Meet Central 2.0</h1><div class="subtle">Offline Announcer Workstation · Step 8</div></div>
+    <div><h1>Swim Meet Central 2.0</h1><div class="subtle">Offline Announcer Workstation · Step 8B</div></div>
     <div id="connection" class="status" role="status">Checking local storage…</div>
   </header>
   <div class="demo"><strong>DEMONSTRATION DATA ONLY.</strong> This step does not load your Google Sheet or upload changes. Test events and swimmers are fictional. Do not use this version for a real meet.</div>
@@ -69,27 +76,25 @@
       <h2>In the Pool</h2>
       <div class="pool-heading"><span class="big-number" id="poolNumber">—</span><div class="heat-badge" id="heatBadge" hidden><strong id="heatNumber"></strong><span>HEATS</span></div></div>
       <div class="pool-name" id="poolName"></div>
-      <div id="familyAlert"></div>
       <div class="pool-qual" id="poolQual"></div>
+      <div class="family-slot" id="familyAlert"></div>
       <div class="pool-buttons"><button class="action" id="prevEvent" type="button" aria-label="Previous event">−</button><button class="action" id="nextEvent" type="button" aria-label="Next event">+</button></div>
     </section>
-    <div class="right">
-      <section class="panel">
-        <h2>Event-Based To-Do List</h2>
-        <p class="subtle">Tasks appear when their event position is reached. A position ending in .5 means between events.</p>
-        <div id="taskList"></div>
-        <form id="taskForm" class="task-form">
-          <input type="number" id="taskPosition" step="0.5" min="0.5" placeholder="14.5" aria-label="Task position" required>
-          <input type="text" id="taskText" maxlength="180" placeholder="New task" aria-label="Task description" required>
-          <button class="action" type="submit">Add</button>
-        </form>
-      </section>
-      <section class="panel swimmers">
-        <h2>Dad's Corner</h2>
-        <p class="subtle">Current times save on this computer. No automatic refresh.</p>
-        <div id="swimmerList"></div>
-      </section>
-    </div>
+    <section class="panel swimmers">
+      <h2>Dad's Corner</h2>
+      <p class="subtle">Current times save on this computer. No automatic refresh.</p>
+      <div id="swimmerList"></div>
+    </section>
+    <section class="panel tasks-panel" id="tasksPanel">
+      <h2>Event-Based To-Do List</h2>
+      <p class="subtle">Tasks appear when their event position is reached. A position ending in .5 means between events.</p>
+      <div id="taskList"></div>
+      <form id="taskForm" class="task-form">
+        <input type="number" id="taskPosition" step="0.5" min="0.5" placeholder="14.5" aria-label="Task position" required>
+        <input type="text" id="taskText" maxlength="180" placeholder="New task" aria-label="Task description" required>
+        <button class="action" type="submit">Add</button>
+      </form>
+    </section>
   </main>
   <div class="footer" id="storageStatus">Loading saved demonstration data…</div>
   <dialog id="eventDialog"><h2 id="detailTitle">Event details</h2><div id="detailBody"></div><p><button class="action" id="closeDialog" type="button">Close</button></p></dialog>
@@ -196,6 +201,7 @@
       const container = $('taskList'); container.replaceChildren();
       const position = Number(state.poolNumber);
       const visible = [...state.tasks].filter(task => task.done || task.position <= position).sort((a,b) => a.position-b.position);
+      $('tasksPanel').classList.toggle('has-due', state.tasks.some(task => !task.done && task.position <= position));
       if (!visible.length) container.append(node('p','No tasks due yet.','subtle'));
       visible.forEach(task => {
         const row = node('div',undefined,'task' + (task.done?' done':''));
