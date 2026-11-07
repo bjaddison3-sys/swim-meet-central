@@ -1,0 +1,10 @@
+{
+  "name": "Swim Meet Central 2.0",
+  "short_name": "Swim Central",
+  "description": "Offline-capable swim meet announcer workstation",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f1f5f3",
+  "theme_color": "#17613d"
+}
