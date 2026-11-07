@@ -4,119 +4,263 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#17613d">
-  <meta name="description" content="Swim Meet Central offline workstation test">
   <link rel="manifest" href="./manifest.webmanifest">
-  <title>Swim Meet Central 2.0 — Offline Test</title>
+  <title>Swim Meet Central 2.0 — Offline Dashboard</title>
   <style>
-    :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172b25;background:#f1f5f3}
-    body{margin:0;padding:24px}main{max-width:640px;margin:32px auto;background:white;padding:30px;border-radius:18px;box-shadow:0 6px 24px #102b1b15}
-    h1{color:#17613d;margin:0 0 8px}p{line-height:1.5}.muted{color:#586b63}.status{padding:12px 16px;border-radius:10px;background:#e7f4ea;margin:18px 0}
-    label{display:block;font-weight:650;margin:18px 0 8px}textarea{box-sizing:border-box;width:100%;min-height:110px;padding:12px;border:1px solid #a6b8ae;border-radius:10px;font:inherit}
-    button{background:#17613d;color:white;border:0;border-radius:10px;padding:12px 16px;font-weight:650;cursor:pointer;margin-top:12px}
-    button:disabled{opacity:.6;cursor:wait}#saved{font-weight:600;color:#17613d;min-height:1.5em}
+    :root { font-family: system-ui, -apple-system, sans-serif; color: #172b25; background: #edf2f0; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px; }
+    header, .layout { max-width: 1400px; margin: auto; }
+    header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    h1 { margin: 0; font-size: 1.6rem; } h2 { margin: 0 0 12px; font-size: 1.15rem; } h3 { margin: 0; }
+    .subtle { color: #5b6d66; font-size: .87rem; } .status { padding: 8px 12px; border-radius: 9px; background: #dcebe3; font-size: .85rem; }
+    .layout { display: grid; grid-template-columns: minmax(245px, .95fr) minmax(320px, 1.5fr) minmax(280px, 1.1fr); gap: 14px; align-items: start; }
+    .panel { border-radius: 14px; background: white; padding: 18px; box-shadow: 0 3px 15px #152e2112; min-width: 0; }
+    .called { background: #b65c1c; color: white; } .pool { background: #237a50; color: white; }
+    .called .subtle, .pool .subtle { color: #f2f5ed; }
+    .list { max-height: 480px; overflow-y: auto; padding-right: 4px; }
+    .event-row { display: flex; align-items: center; gap: 10px; padding: 9px 4px; border-bottom: 1px solid #ffffff35; }
+    .event-row input { width: 20px; height: 20px; flex: none; accent-color: #1e6c47; }
+    .event-link { background: none; border: 0; color: inherit; text-align: left; padding: 2px; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font: inherit; }
+    .event-row.checked .event-link { opacity: .72; }
+    .big-number { font-size: clamp(4.5rem, 10vw, 8rem); font-weight: 800; line-height: 1; }
+    .pool-heading { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 24px 0; }
+    .heat-badge { display: grid; place-content: center; text-align: center; border-radius: 50%; background: white; color: #17613d; width: 76px; height: 76px; }
+    .heat-badge strong { font-size: 1.8rem; line-height: 1; } .heat-badge span { font-size: .67rem; font-weight: 800; }
+    .pool-name { text-align: center; font-size: 1.3rem; font-weight: 750; min-height: 3.1em; }
+    .pool-qual { text-align: center; margin: 15px 0; } .pool-qual strong { font-size: 1.35rem; }
+    .pool-buttons { display: flex; gap: 12px; margin-top: 20px; }
+    button.action { background: #174e35; color: white; border: 0; padding: 11px 16px; border-radius: 9px; font: inherit; font-weight: 700; cursor: pointer; }
+    button.action:disabled { opacity: .5; cursor: not-allowed; }
+    .pool-buttons button { flex: 1; background: white; color: #17613d; font-size: 1.5rem; }
+    .family-alert { background: #ffe59d; color: #754c05; border-radius: 9px; padding: 12px; margin: 12px 0; font-weight: 750; }
+    .right { display: grid; gap: 14px; } .task { display: flex; align-items: flex-start; gap: 9px; padding: 10px 0; border-bottom: 1px solid #e3e9e6; }
+    .task input { margin-top: 4px; width: 18px; height: 18px; } .task.done { opacity: .6; }
+    .task small { display: block; color: #62736a; margin-top: 3px; }
+    .task-form { display: grid; grid-template-columns: 76px 1fr auto; gap: 7px; margin-top: 12px; }
+    input[type=text], input[type=number] { min-width: 0; width: 100%; border: 1px solid #b6c7bc; border-radius: 8px; padding: 9px; font: inherit; }
+    .task-form button { padding: 8px 11px; }
+    .swimmers { background: #353e48; color: white; } .swimmers .subtle { color: #d0d9e0; }
+    .swimmer { background: #49525d; padding: 12px; border-radius: 9px; margin: 9px 0; }
+    .swimmer-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)) 100px; gap: 7px; margin-top: 10px; align-items: end; }
+    .swimmer-grid label { font-size: .68rem; } .swimmer-grid strong { display: block; font-size: .84rem; overflow-wrap: anywhere; }
+    .swimmer-grid input { padding: 7px; font-size: .84rem; }
+    .demo { background: #fff0c2; color: #644d0b; padding: 9px 13px; border-radius: 9px; font-size: .86rem; margin: 0 auto 14px; max-width: 1400px; }
+    dialog { border: 0; border-radius: 14px; padding: 25px; max-width: 430px; width: calc(100% - 30px); box-shadow: 0 15px 65px #0006; }
+    dialog::backdrop { background: #101d18a8; } .detail { padding: 8px 0; border-bottom: 1px solid #e6ece8; }
+    .footer { max-width: 1400px; margin: 14px auto; color: #62736a; font-size: .85rem; }
+    @media (max-width: 1050px) { .layout { grid-template-columns: 1fr 1fr; } .right { grid-column: 1 / -1; grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 650px) { .layout, .right { grid-template-columns: 1fr; } .right { grid-column: auto; } body { padding: 10px; } }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Swim Meet Central 2.0</h1>
-    <p class="muted">Announcer Workstation · Step 7 Offline Test</p>
-    <div class="status" id="connection" role="status">Checking connection…</div>
-    <div class="status" id="offlineReady" role="status">Preparing offline application…</div>
-    <label for="meetNote">Test note — type anything here</label>
-    <textarea id="meetNote" placeholder="Example: Announce senior recognition after Event 14"></textarea>
-    <button id="saveButton" type="button">Save note on this computer</button>
-    <p id="saved" role="status"></p>
-    <p class="muted">This is a local-storage test only. No student data or Google Sheets information is connected yet.</p>
+  <header>
+    <div><h1>Swim Meet Central 2.0</h1><div class="subtle">Offline Announcer Workstation · Step 8</div></div>
+    <div id="connection" class="status" role="status">Checking local storage…</div>
+  </header>
+  <div class="demo"><strong>DEMONSTRATION DATA ONLY.</strong> This step does not load your Google Sheet or upload changes. Test events and swimmers are fictional. Do not use this version for a real meet.</div>
+  <main class="layout">
+    <section class="panel called">
+      <h2>Last Called</h2>
+      <p class="subtle">Check an event when you've announced it. Click its name for details.</p>
+      <div id="calledList" class="list"></div>
+    </section>
+    <section class="panel pool">
+      <h2>In the Pool</h2>
+      <div class="pool-heading"><span class="big-number" id="poolNumber">—</span><div class="heat-badge" id="heatBadge" hidden><strong id="heatNumber"></strong><span>HEATS</span></div></div>
+      <div class="pool-name" id="poolName"></div>
+      <div id="familyAlert"></div>
+      <div class="pool-qual" id="poolQual"></div>
+      <div class="pool-buttons"><button class="action" id="prevEvent" type="button" aria-label="Previous event">−</button><button class="action" id="nextEvent" type="button" aria-label="Next event">+</button></div>
+    </section>
+    <div class="right">
+      <section class="panel">
+        <h2>Event-Based To-Do List</h2>
+        <p class="subtle">Tasks appear when their event position is reached. A position ending in .5 means between events.</p>
+        <div id="taskList"></div>
+        <form id="taskForm" class="task-form">
+          <input type="number" id="taskPosition" step="0.5" min="0.5" placeholder="14.5" aria-label="Task position" required>
+          <input type="text" id="taskText" maxlength="180" placeholder="New task" aria-label="Task description" required>
+          <button class="action" type="submit">Add</button>
+        </form>
+      </section>
+      <section class="panel swimmers">
+        <h2>Dad's Corner</h2>
+        <p class="subtle">Current times save on this computer. No automatic refresh.</p>
+        <div id="swimmerList"></div>
+      </section>
+    </div>
   </main>
+  <div class="footer" id="storageStatus">Loading saved demonstration data…</div>
+  <dialog id="eventDialog"><h2 id="detailTitle">Event details</h2><div id="detailBody"></div><p><button class="action" id="closeDialog" type="button">Close</button></p></dialog>
   <script>
     'use strict';
-    const connection = document.getElementById('connection');
-    const offlineReady = document.getElementById('offlineReady');
-    const note = document.getElementById('meetNote');
-    const saved = document.getElementById('saved');
-    const saveButton = document.getElementById('saveButton');
     const DB_NAME = 'swim-meet-central-v2';
-    const STORE = 'local-settings';
-    function updateConnection(){connection.textContent = navigator.onLine ? 'Browser reports: online' : 'Browser reports: offline';}
-    window.addEventListener('online',updateConnection);
-    window.addEventListener('offline',updateConnection);
-    updateConnection();
-    function openDatabase(){
-      return new Promise((resolve,reject)=>{
-        const request=indexedDB.open(DB_NAME,1);
-        request.onupgradeneeded=()=>{const db=request.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE);};
-        request.onsuccess=()=>resolve(request.result);
-        request.onerror=()=>reject(request.error);
+    const DATA_STORE = 'workstation';
+    const DATA_KEY = 'step8-demo';
+    const sample = {
+      events: [
+        {number:'12', category:'MS Girls', name:'50 Yard Freestyle', heats:'3', stateTime:''},
+        {number:'13', category:'MS Boys', name:'50 Yard Freestyle', heats:'2', stateTime:''},
+        {number:'14', category:'HS Girls', name:'100 Yard Freestyle', heats:'4', stateTime:'58.50'},
+        {number:'15', category:'HS Boys', name:'100 Yard Freestyle', heats:'4', stateTime:'52.00'},
+        {number:'16', category:'HS Girls', name:'100 Yard Backstroke', heats:'3', stateTime:'1:05.00'},
+        {number:'17', category:'HS Boys', name:'100 Yard Backstroke', heats:'', stateTime:'57.50'},
+        {number:'18', category:'HS Girls', name:'200 Yard Freestyle', heats:'2', stateTime:'2:10.00'}
+      ],
+      poolNumber: '14', called: {'12':true,'13':true},
+      tasks: [
+        {id:'demo-1',position:14.5,text:'Announce senior recognition',done:false},
+        {id:'demo-2',position:15,text:'Remind teams about warm-down lanes',done:false},
+        {id:'demo-3',position:18,text:'Announce concession stand closing',done:false}
+      ],
+      swimmers: [
+        {id:'demo-swim-1',name:'Sample Swimmer A',eventNumber:'14',heat:'2',lane:'4',seed:'1:01.20',pr:'59.85',current:''},
+        {id:'demo-swim-2',name:'Sample Swimmer B',eventNumber:'18',heat:'1',lane:'3',seed:'2:12.00',pr:'2:09.50',current:''}
+      ]
+    };
+    let state;
+    const $ = id => document.getElementById(id);
+    function openDb() {
+      return new Promise((resolve,reject) => {
+        const request = indexedDB.open(DB_NAME, 2);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains('local-settings')) db.createObjectStore('local-settings');
+          if (!db.objectStoreNames.contains(DATA_STORE)) db.createObjectStore(DATA_STORE);
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
       });
     }
-    async function readNote(){
-      const db=await openDatabase();
-      return new Promise((resolve,reject)=>{
-        const tx=db.transaction(STORE,'readonly');
-        const request=tx.objectStore(STORE).get('test-note');
-        request.onsuccess=()=>resolve(request.result||'');
-        request.onerror=()=>reject(request.error);
-        tx.oncomplete=()=>db.close();
+    async function loadState() {
+      const db = await openDb();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(DATA_STORE, 'readonly');
+        const request = tx.objectStore(DATA_STORE).get(DATA_KEY);
+        request.onsuccess = () => resolve(request.result || structuredClone(sample));
+        request.onerror = () => reject(request.error);
+        tx.oncomplete = () => db.close();
       });
     }
-    async function writeNote(value){
-      const db=await openDatabase();
-      return new Promise((resolve,reject)=>{
-        const tx=db.transaction(STORE,'readwrite');
-        tx.objectStore(STORE).put(value,'test-note');
-        tx.oncomplete=()=>{db.close();resolve();};
-        tx.onerror=()=>{db.close();reject(tx.error);};
+    async function saveState() {
+      const db = await openDb();
+      return new Promise((resolve,reject) => {
+        const tx = db.transaction(DATA_STORE, 'readwrite');
+        tx.objectStore(DATA_STORE).put(state, DATA_KEY);
+        tx.oncomplete = () => { db.close(); $('storageStatus').textContent = 'All demonstration changes saved locally on this computer.'; resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
       });
     }
-    saveButton.addEventListener('click',async()=>{
-      saveButton.disabled=true;
-      saved.textContent='Saving…';
-      try{await writeNote(note.value);saved.textContent='Saved locally. You can close and reopen this page.';}
-      catch(error){saved.textContent='Could not save locally: '+error.message;}
-      finally{saveButton.disabled=false;}
-    });
-    readNote().then(value=>{note.value=value;if(value)saved.textContent='Your previously saved note was restored.';})
-      .catch(error=>{saved.textContent='Local storage unavailable: '+error.message;});
-    if ('serviceWorker' in navigator) {
-      offlineReady.textContent = 'Registering offline service worker…';
-      navigator.serviceWorker.register('./sw.js', { scope: './', updateViaCache: 'none' })
-        .then(registration => {
-          function showStatus() {
-            if (registration.active && registration.active.state === 'activated') {
-              offlineReady.textContent = 'Offline files installed. You can test with WiFi disconnected.';
-            } else if (registration.installing) {
-              offlineReady.textContent = 'Installing offline files (' + registration.installing.state + ')…';
-            } else if (registration.waiting) {
-              offlineReady.textContent = 'Offline update waiting to activate. Refresh this page.';
-            } else {
-              offlineReady.textContent = 'Service worker registered; waiting for activation…';
-            }
-          }
-          showStatus();
-          registration.addEventListener('updatefound', () => {
-            const worker = registration.installing;
-            if (worker) {
-              worker.addEventListener('statechange', () => {
-                showStatus();
-                if (worker.state === 'redundant') {
-                  offlineReady.textContent = 'Offline installation failed. Check Chrome DevTools → Application → Service Workers for the error.';
-                }
-              });
-            }
-          });
-          if (registration.installing) {
-            registration.installing.addEventListener('statechange', showStatus);
-          }
-          navigator.serviceWorker.addEventListener('controllerchange', showStatus);
-          registration.update().catch(error => {
-            offlineReady.textContent = 'Offline update error: ' + error.message;
-          });
-        })
-        .catch(error => {
-          offlineReady.textContent = 'Offline installation failed: ' + error.message;
+    function save() { $('storageStatus').textContent = 'Saving locally…'; saveState().catch(error => { $('storageStatus').textContent = 'Save failed: ' + error.message; }); }
+    function node(tag, text, className) {
+      const el = document.createElement(tag);
+      if (text !== undefined) el.textContent = String(text);
+      if (className) el.className = className;
+      return el;
+    }
+    function renderCalled() {
+      const list = $('calledList');
+      const scroll = list.scrollTop;
+      list.replaceChildren();
+      state.events.forEach(event => {
+        const row = node('div', undefined, 'event-row' + (state.called[event.number] ? ' checked' : ''));
+        const check = node('input'); check.type = 'checkbox'; check.checked = !!state.called[event.number];
+        check.setAttribute('aria-label', 'Called event ' + event.number);
+        check.addEventListener('change', () => { state.called[event.number] = check.checked; row.classList.toggle('checked',check.checked); save(); });
+        const link = node('button', event.number + '. ' + event.category + ' — ' + event.name, 'event-link');
+        link.type = 'button'; link.addEventListener('click', () => showDetails(event));
+        row.append(check,link); list.append(row);
+      });
+      list.scrollTop = scroll;
+    }
+    function renderPool() {
+      const index = state.events.findIndex(event => event.number === state.poolNumber);
+      const event = state.events[index];
+      if (!event) return;
+      $('poolNumber').textContent = event.number;
+      $('poolName').textContent = event.category + ' — ' + event.name;
+      $('heatBadge').hidden = !event.heats;
+      $('heatNumber').textContent = event.heats;
+      $('poolQual').replaceChildren();
+      if (event.stateTime) {
+        $('poolQual').append(node('div','GHSA State Qualifying Time'),node('strong',event.stateTime));
+      } else $('poolQual').textContent = 'No state qualifying time for this event';
+      const family = state.swimmers.filter(swimmer => swimmer.eventNumber === event.number);
+      $('familyAlert').replaceChildren();
+      if (family.length) $('familyAlert').append(node('div','♥ FAMILY EVENT — ' + family.map(swimmer => swimmer.name + ' · Heat ' + swimmer.heat + ' · Lane ' + swimmer.lane).join(' | '),'family-alert'));
+      $('prevEvent').disabled = index <= 0;
+      $('nextEvent').disabled = index >= state.events.length - 1;
+    }
+    function renderTasks() {
+      const container = $('taskList'); container.replaceChildren();
+      const position = Number(state.poolNumber);
+      const visible = [...state.tasks].filter(task => task.done || task.position <= position).sort((a,b) => a.position-b.position);
+      if (!visible.length) container.append(node('p','No tasks due yet.','subtle'));
+      visible.forEach(task => {
+        const row = node('div',undefined,'task' + (task.done?' done':''));
+        const check = node('input'); check.type='checkbox'; check.checked=task.done;
+        check.setAttribute('aria-label','Complete task ' + task.text);
+        check.addEventListener('change', () => { task.done=check.checked; save(); renderTasks(); });
+        const content = node('div'); content.append(node('div',task.text),node('small','Position ' + task.position + (task.done?' · Completed':' · Due')));
+        row.append(check,content); container.append(row);
+      });
+      const upcoming = [...state.tasks].filter(task => !task.done && task.position > position).sort((a,b)=>a.position-b.position).slice(0,2);
+      if (upcoming.length) container.append(node('p','Coming up: ' + upcoming.map(task => task.position + ' — ' + task.text).join(' · '),'subtle'));
+    }
+    function renderSwimmers() {
+      const container = $('swimmerList'); container.replaceChildren();
+      state.swimmers.forEach(swimmer => {
+        const event = state.events.find(item => item.number === swimmer.eventNumber);
+        const card = node('div',undefined,'swimmer');
+        card.append(node('h3',swimmer.name),node('div','Event ' + swimmer.eventNumber + ' · Heat ' + swimmer.heat + ' · Lane ' + swimmer.lane,'subtle'));
+        const grid = node('div',undefined,'swimmer-grid');
+        [['SEED',swimmer.seed],['PR',swimmer.pr],['STATE',event?.stateTime || '—']].forEach(([label,value]) => {
+          const cell = node('div'); cell.append(node('label',label),node('strong',value)); grid.append(cell);
         });
-    } else {
-      offlineReady.textContent = 'This browser does not support offline installation.';
+        const current = node('div'); const label=node('label','CURRENT'); const input=node('input'); input.type='text'; input.value=swimmer.current;
+        input.placeholder='Time'; input.setAttribute('aria-label','Current time for ' + swimmer.name);
+        input.addEventListener('input', () => { swimmer.current = input.value; save(); });
+        current.append(label,input); grid.append(current); card.append(grid); container.append(card);
+      });
+    }
+    function showDetails(event) {
+      $('detailTitle').textContent = 'Event ' + event.number;
+      const body = $('detailBody'); body.replaceChildren();
+      [['Category',event.category],['Event',event.name],['Event number',event.number],['Number of heats',event.heats || 'Not entered'],['State qualifying time',event.stateTime || 'Not applicable']].forEach(([label,value]) => {
+        body.append(node('div',label + ': ' + value,'detail'));
+      });
+      $('eventDialog').showModal();
+    }
+    function render() { renderCalled(); renderPool(); renderTasks(); renderSwimmers(); }
+    $('closeDialog').addEventListener('click',() => $('eventDialog').close());
+    $('eventDialog').addEventListener('click',event => { if(event.target === $('eventDialog')) $('eventDialog').close(); });
+    $('prevEvent').addEventListener('click',() => advance(-1));
+    $('nextEvent').addEventListener('click',() => advance(1));
+    function advance(direction) {
+      const index = state.events.findIndex(event => event.number === state.poolNumber);
+      const next = state.events[index + direction];
+      if (!next) return;
+      state.poolNumber = next.number; save(); renderPool(); renderTasks();
+    }
+    $('taskForm').addEventListener('submit',event => {
+      event.preventDefault();
+      const position = Number($('taskPosition').value);
+      const text = $('taskText').value.trim();
+      if (!Number.isFinite(position) || position <= 0 || !Number.isInteger(position * 2) || !text) return;
+      state.tasks.push({id:'task-' + Date.now() + '-' + Math.random().toString(36).slice(2),position,text,done:false});
+      $('taskForm').reset(); save(); renderTasks();
+    });
+    function connectionStatus() { $('connection').textContent = navigator.onLine ? 'Online · local demonstration mode' : 'Offline · working from saved files'; }
+    window.addEventListener('online',connectionStatus);
+    window.addEventListener('offline',connectionStatus);
+    connectionStatus();
+    loadState().then(saved => { state=saved; render(); $('storageStatus').textContent='Ready · Changes are saved locally. No Google Sheets sync in Step 8.'; })
+      .catch(error => { $('storageStatus').textContent='Local storage failed: ' + error.message; });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).catch(error => {
+        if (navigator.onLine) $('storageStatus').textContent='Offline installation issue: ' + error.message;
+      });
     }
   </script>
 </body>
